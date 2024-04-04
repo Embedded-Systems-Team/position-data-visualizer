@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Position Visualization</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+        .position-fixed {
+            top: 10px;
+            right: 10px;
+            z-index: 1030; /* Above canvas but below modals/popovers */
+        }
+        #coordinates {
+            position: fixed;
+            top: 70px; /* Adjust as needed for padding from the top */
+            right: 20px; /* Adjust as needed for padding from the right */
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+            border: 1px solid #ddd; /* Light grey border */
+            border-radius: 5px;
+            z-index: 1030; /* Ensure it's above most elements */
+        }
+    </style>
+</head>
+<body>
+<div id="container" class"container">
+    <p class="h1 text-center">3D Position Visualization</p>
+    <div id="coordinates">
+        <p id="x-coord">X: 0</p>
+        <p id="y-coord">Y: 0</p>
+        <p id="z-coord">Z: 0</p>
+    </div>
+
+</div>
+<script>
+    // Scene setup
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.getElementById('container').appendChild(renderer.domElement);
+
+    camera.position.set(5, 5, 5); // Adjust the values as needed
+
+    // Orient the camera towards the center of the scene (the origin)
+    camera.lookAt(scene.position); // Assuming the axes intersect at the scene's origin
+
+    // Line setup
+    const material = new THREE.LineBasicMaterial({ color: 0xFFA500 });
+    const geometry = new THREE.BufferGeometry();
+    const MAX_POINTS = 500;
+    const positions = new Float32Array(MAX_POINTS * 3); // 3 vertices per point
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const line = new THREE.Line(geometry, material);
+
+    scene.add(line);
+
+    // Add an Axis Helper to the scene
+    const axesHelper = new THREE.AxesHelper(5);
+    scene.add(axesHelper);
+
+    // Update line with new positions
+    function updateLine(newX, newY, newZ) {
+        const positionAttribute = geometry.attributes.position;
+        const array = positionAttribute.array;
+
+        // Shift data
+        for (let i = 3; i < array.length; i++) {
+            array[i - 3] = array[i];
+        }
+
+        // Add new position
+        array[array.length - 3] = newX;
+        array[array.length - 2] = newY;
+        array[array.length - 1] = newZ;
+
+        positionAttribute.needsUpdate = true; // Mark the attribute as needing an update
+
+        // Update UI
+        document.getElementById("x-coord").textContent = `X: ${newX}`;
+        document.getElementById("y-coord").textContent = `Y: ${newY}`;
+        document.getElementById("z-coord").textContent = `Z: ${newZ}`;
+    }
+
+    // Animation loop
+    function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    // Fetch data and update line
+    function fetchData() {
+        fetch("/api/get-position-data/")
+            .then(response => response.json())
+            .then(data => {
+                updateLine(data.x, data.y, data.z);
+            })
+            .catch(error => console.error("Error fetching data:", error));
+    }
+
+    // Set interval for fetching data
+    setInterval(fetchData, 500); // Fetch data every 500ms
+    fetchData(); // Initial fetch
+
+    // Camera positioning
+    camera.position.z = 5;
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+</body>
+</html>
