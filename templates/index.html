@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Plane Orientation Visualization</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+
     <style>
         body { margin: 0; }
         canvas { display: block; }
@@ -28,29 +28,50 @@
         <p id="pitch-coord">Pitch: 0°</p>
     </div>
 </div>
-<script>
+<script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.125.0/build/three.module.js';
+    import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.125.0/examples/jsm/loaders/GLTFLoader.js';
+    
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.getElementById('container').appendChild(renderer.domElement);
 
-    // Plane setup
-    const geometry = new THREE.PlaneGeometry(5, 5);
-    const material = new THREE.MeshBasicMaterial({color: 0xff0000, side: THREE.DoubleSide});
-    const plane = new THREE.Mesh(geometry, material);
-    scene.add(plane);
+    // Adding lights to the scene
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // soft white light
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(0, 1, 0); // Adjust as necessary
+    scene.add(directionalLight);
+
+    // Load airplane model
+    const loader = new GLTFLoader();
+    let airplane;
+    loader.load('/static/models/scene.gltf', function (gltf) {
+        airplane = gltf.scene;  // Remove the 'const' to modify the outer scoped 'airplane'
+        scene.add(airplane);
+        airplane.scale.set(5, 5, 5); // Scale up the model
+        airplane.position.set(0, 0, 0); // Center the model
+        airplane.rotation.order = 'YXZ'; // Adjust rotation order if necessary
+    }, undefined, function (error) {
+        console.error('An error occurred while loading the model:', error);
+    });
 
     // Axes Helper
     const axesHelper = new THREE.AxesHelper(5);
     scene.add(axesHelper);
 
-    camera.position.set(0, 10, 10);
+    camera.position.set(0, 5, 10);
     camera.lookAt(scene.position);
 
     function updatePlane(roll, pitch) {
-        plane.rotation.x = THREE.MathUtils.degToRad(pitch);
-        plane.rotation.z = -THREE.MathUtils.degToRad(roll);
+        if (airplane) {
+            airplane.rotation.y = 0; // Heading (yaw) is not being changed here
+            airplane.rotation.x = THREE.MathUtils.degToRad(pitch); // Pitch
+            airplane.rotation.z = -THREE.MathUtils.degToRad(roll); // Roll
+        }
         document.getElementById("roll-coord").textContent = `Roll: ${roll}°`;
         document.getElementById("pitch-coord").textContent = `Pitch: ${pitch}°`;
     }
@@ -70,9 +91,8 @@
             .catch(error => console.error("Error fetching data:", error));
     }
 
-    setInterval(fetchData, 500);
-    fetchData();
-
+    setInterval(fetchData, 500); // Update every 500ms
+    fetchData(); // Initial fetch
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
 integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>

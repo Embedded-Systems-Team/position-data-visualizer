@@ -1,7 +1,10 @@
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, send_from_directory
 import serial
+from flask_cors import CORS
+
 
 app = Flask(__name__)
+CORS(app)
 
 # In-memory storage for roll and pitch data
 orientation_data = {"roll": 0, "pitch": 0}
@@ -29,6 +32,14 @@ def read_serial_data():
 def get_orientation_data():
     read_serial_data()
     return jsonify(orientation_data)
+
+# @app.route('/textures/<path:filename>')
+# def send_texture(filename):
+#     return send_from_directory('static/textures', filename)
+
+# @app.route('/static/<path:path>')
+# def send_static(path):
+#     return send_from_directory('static', path)
 
 if __name__ == "__main__":
     app.run(debug=True)
