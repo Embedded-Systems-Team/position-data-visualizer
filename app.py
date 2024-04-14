@@ -3,44 +3,32 @@ import serial
 
 app = Flask(__name__)
 
-# In-memory storage for position data
-position_data = {"x": 0, "y": 0, "z": 0}
+# In-memory storage for roll and pitch data
+orientation_data = {"roll": 0, "pitch": 0}
 
 # Serial port configuration
-ser = serial.Serial('COM6', 9600)  # Modify the port and baud rate as per your setup
+ser = serial.Serial("COM6", 9600)  # Modify the port and baud rate as per your setup
 
 @app.route("/")
 def home():
     return render_template("index.html")
 
-# Method to read data from serial port
 def read_serial_data():
-    global position_data
+    global orientation_data
     try:
-        # Assuming data is sent as comma-separated values: x,y,z
+        # Assuming data is sent as comma-separated values: roll,pitch
         data = ser.readline().decode().strip().split(',')
-        print(f"data={data}")
-        x = float(data[0])
-        y = float(data[1])
-        z = float(data[2])
-        print(f"Serial data: ({x}, {y}, {z})")
-        position_data["x"] = x
-        position_data["y"] = y
-        position_data["z"] = z
+        roll = float(data[0])
+        pitch = float(data[1])
+        orientation_data["roll"] = roll
+        orientation_data["pitch"] = pitch
     except Exception as e:
         print("Error reading serial data:", e)
 
-# Route to update position data (optional)
-@app.route("/update-position/")
-def update_position():
+@app.route("/api/get-orientation-data/")
+def get_orientation_data():
     read_serial_data()
-    return {"message": "Position data updated successfully"}
-
-# Route to get position data
-@app.route("/api/get-position-data/")
-def get_position_data():
-    read_serial_data()
-    return jsonify(position_data)
+    return jsonify(orientation_data)
 
 if __name__ == "__main__":
     app.run(debug=True)
