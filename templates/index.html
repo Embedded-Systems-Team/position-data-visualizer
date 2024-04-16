@@ -35,7 +35,7 @@
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(window.innerWidth * 0.8, window.innerHeight * 0.8);
     document.getElementById('container').appendChild(renderer.domElement);
 
     // Adding lights to the scene
@@ -91,7 +91,7 @@
             .catch(error => console.error("Error fetching data:", error));
     }
 
-    setInterval(fetchData, 30); // Update every 500ms
+    setInterval(fetchData, 60); // Update every 60ms
     fetchData(); // Initial fetch
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"

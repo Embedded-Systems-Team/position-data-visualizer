@@ -2,6 +2,7 @@ from flask import Flask, jsonify, render_template
 import serial
 from flask_cors import CORS
 import threading
+import time
 
 app = Flask(__name__)
 CORS(app)
@@ -26,8 +27,10 @@ def read_serial_data():
             pitch = float(data[1])
             orientation_data["roll"] = roll
             orientation_data["pitch"] = pitch
+            print(f"Received: ({roll}, {pitch})")
         except Exception as e:
             print("Error reading serial data:", e)
+        time.sleep(0.005)
 
 # Starting a background thread to read serial data continuously
 def start_background_thread():
@@ -35,10 +38,12 @@ def start_background_thread():
     thread.daemon = True  # Daemonize thread
     thread.start()
 
+start_background_thread()
+
 @app.route("/api/get-orientation-data/")
 def get_orientation_data():
     return jsonify(orientation_data)
 
 if __name__ == "__main__":
-    start_background_thread()
-    app.run(debug=True)
+    # start_background_thread()
+    app.run(debug=True, port=5000)
